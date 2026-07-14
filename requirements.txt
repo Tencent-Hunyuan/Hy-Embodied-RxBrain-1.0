@@ -1,0 +1,8 @@
+torch==2.10.0
+torchvision==0.25.0
+safetensors==0.7.0
+einops==0.8.1
+numpy==2.4.1
+pillow==12.3.0
+flash-attn==2.8.3
+git+https://github.com/huggingface/transformers@9293856c419762ebf98fbe2bd9440f9ce7069f1a

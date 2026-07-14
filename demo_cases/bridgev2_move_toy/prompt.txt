@@ -1,0 +1,1 @@
+Move the green toy from the left side of the stovetop and hold it over the metal pot on the left burner. Please give the full plan as concrete physical actions, one step per action, and imagine the state once each step is completed. If only one step remains, provide only that final step.

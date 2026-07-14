@@ -1,0 +1,20 @@
+[
+  {
+    "case": "umi_fold_sock",
+    "robot": "umi",
+    "n_steps": 5,
+    "prompt": "Fold the purple sock in half. Please lay out the high-level subgoal plan and imagine the resulting frame after each major stage. If only one subgoal remains, provide only that final subgoal."
+  },
+  {
+    "case": "xtrainer_fold_garment",
+    "robot": "xtrainer",
+    "n_steps": 3,
+    "prompt": "Fold the lower garment in half vertically. Please lay out the high-level subgoal plan and imagine the resulting frame after each major stage. If only one subgoal remains, provide only that final subgoal."
+  },
+  {
+    "case": "bridgev2_move_toy",
+    "robot": "bridgev2",
+    "n_steps": 3,
+    "prompt": "Move the green toy from the left side of the stovetop and hold it over the metal pot on the left burner. Please give the full plan as concrete physical actions, one step per action, and imagine the state once each step is completed. If only one step remains, provide only that final step."
+  }
+]
