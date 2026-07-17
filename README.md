@@ -16,6 +16,8 @@
   <img src="./assets/teaser.png" width="100%" alt="RxBrain — capability overview"/>
 </p>
 
+https://github.com/user-attachments/assets/2990a367-6ccd-41be-bead-5b3a27863549
+
 </div>
 
 ---
