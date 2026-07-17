@@ -1,13 +1,15 @@
 <div align="center">
 
-# RxBrain: Embodied Cognition Foundation Model with Joint Language–Visual Reasoning and Imagination
+# RxBrain: Embodied Cognition Foundation Model with Joint Language-Visual Reasoning and Imagination
 
 <p align="center">
   <em>Tencent Robotics X&nbsp;&nbsp;×&nbsp;&nbsp;Futian Laboratory&nbsp;&nbsp;×&nbsp;&nbsp;Tencent Hy Team</em>
 </p>
 
-[![Model](https://img.shields.io/badge/🤗%20HuggingFace-Model-yellow)](https://huggingface.co/tencent/Hy-Embodied-RxBrain-1.0)
-[![Paper](https://img.shields.io/badge/📄%20Paper-RxBrain-b31b1b)](./assets/RxBrain_v0.pdf)
+[![arXiv](https://img.shields.io/badge/arXiv-2607.14187-b31b1b.svg)](https://arxiv.org/abs/2607.14187)
+[![Model](https://img.shields.io/badge/🤗%20HuggingFace-Model-FFD21E)](https://huggingface.co/tencent/Hy-Embodied-RxBrain-1.0)
+[![Project Page](https://img.shields.io/badge/🌐%20Project-Page-2ea44f)](https://tairos.tencent.com/openSourceModels/hy-embodied-rxbrain-1.0)
+[![Demo](https://img.shields.io/badge/🤗%20HuggingFace-Demo-FFD21E)](https://huggingface.co/spaces/hugging-apps/rxbrain-embodied-cognition)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](./LICENSE)
 
 <p align="center">
@@ -27,10 +29,6 @@ one model that delivers three core capabilities:
 - 🔮 **World State Prediction** — imagine the near-future frames an action produces in the physical world.
 - 🧩 **Joint Subgoal Planning** — decompose a task into steps, emitting for each step *both* the next action (language) *and* the goal image it should reach (vision).
 
-These capabilities are unified through **interleaved generation**: within a single autoregressive sequence
-RxBrain alternates reasoning text and flow-matched imagined frames — a learned `<Image>` token decides when
-to imagine — so an embodied plan couples *what to do* with *what the world should look like*, step by step.
-
 
 ---
 
@@ -38,6 +36,12 @@ to imagine — so an embodied plan couples *what to do* with *what the world sho
 
 - **[2026-07]** 🎉 We release **Hy-Embodied-RxBrain-1.0** — the technical report, inference code and model weights.
 
+---
+## 📋 TODO
+
+* [ ] Open-source **RxBrain-Bench**, a comprehensive benchmark for embodied cognition.
+* [ ] Open-source the fine-tuning code for **Visual Question Answering (VQA)**, **Multi Frames Generation**, and **Interleave Generation**.
+* [x] Release the **technical report**, **inference code**, and **model weights**.
 
 ---
 
