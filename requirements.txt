@@ -6,3 +6,10 @@ numpy==2.4.1
 pillow==12.3.0
 flash-attn==2.8.3
 git+https://github.com/huggingface/transformers@9293856c419762ebf98fbe2bd9440f9ce7069f1a
+
+# ---- Training only (train/); not needed for inference ----------------------
+accelerate==1.12.0
+deepspeed>=0.14        # ZeRO-2, see train/configs/deepspeed_zero2.yaml
+pyarrow>=14            # parquet training buckets (T2I / understanding)
+pyyaml>=6              # training config
+tqdm>=4.66

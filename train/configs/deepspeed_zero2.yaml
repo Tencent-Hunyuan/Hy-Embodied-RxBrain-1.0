@@ -1,0 +1,52 @@
+# Accelerate + DeepSpeed ZeRO-2 config for UnifiedMoT training.
+#
+# num_machines / num_processes below are a single-node 8-GPU DEFAULT. The
+# launcher (train/launch.sh) passes --num_machines / --num_processes on
+# the command line, which OVERRIDE these values — so the same file works
+# unchanged from 1 node up to hundreds of ranks without editing it.
+#
+# Global batch = per_device_train_batch_size x num_processes x
+# gradient_accumulation_steps (per_device_train_batch_size lives in the
+# training config, not here).
+#
+# ZeRO-2 shards optimizer state + gradients but replicates parameters, so
+# per-rank memory is roughly (full model in bf16) + (optimizer state / ranks).
+# Budget ~35-45 GB per rank for this model class on a 64 GB accelerator.
+
+compute_environment: LOCAL_MACHINE
+distributed_type: DEEPSPEED
+num_machines: 1
+num_processes: 8
+main_training_function: main
+mixed_precision: bf16
+same_network: true
+rdzv_backend: static
+
+deepspeed_config:
+  zero_stage: 2
+  gradient_clipping: auto
+  zero3_init_flag: false
+  deepspeed_multinode_launcher: standard
+
+  zero_optimization:
+    stage: 2
+    overlap_comm: true
+    contiguous_gradients: true
+    # Stagger reduce-scatter starts across ranks so that at large scale not
+    # every GPU hits the network at the same instant on each bucket. Costs
+    # ~1-2 ms of extra startup latency per rank; at a few hundred ranks
+    # spanning many nodes it typically saves 50-150 ms in backward by easing
+    # contention on the leaf/spine links. Harmless on a single node.
+    round_robin_gradients: true
+    # Small buckets so backward compute can overlap reduce-scatter. With 5e8
+    # (500 MB), one bucket takes ~93 ms to send at 5.4 GB/s — far longer than
+    # a per-layer backward (~10 ms) — so the overlap window collapses and
+    # reduce-scatter serializes after backward finishes. 5e7 (50 MB) -> ~9 ms
+    # per bucket, comparable to per-layer compute, which restores overlap.
+    # Tune to your interconnect bandwidth. allgather_bucket_size is only used
+    # by ZeRO-3 (we run ZeRO-2) but is matched here for consistency.
+    reduce_bucket_size: 5e7
+    allgather_bucket_size: 5e7
+
+  bf16:
+    enabled: true

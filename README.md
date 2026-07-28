@@ -40,13 +40,14 @@ one model that delivers three core capabilities:
 
 ## 📰 News
 
+- **[2026-07]** 🚀 We release the **fine-tuning code** for VQA, Multi Frames Generation and Interleave Generation — see [`train/`](./train).
 - **[2026-07]** 🎉 We release **Hy-Embodied-RxBrain-1.0** — the technical report, inference code and model weights.
 
 ---
 ## 📋 TODO
 
 * [ ] Open-source **RxBrain-Bench**, a comprehensive benchmark for embodied cognition.
-* [ ] Open-source the fine-tuning code for **Visual Question Answering (VQA)**, **Multi Frames Generation**, and **Interleave Generation**.
+* [x] Open-source the fine-tuning code for **Visual Question Answering (VQA)**, **Multi Frames Generation**, and **Interleave Generation** — see [`train/`](./train).
 * [x] Release the **technical report**, **inference code**, and **model weights**.
 
 ---
@@ -63,6 +64,19 @@ pip install -r requirements.txt
 
 Requirements: **Python 3.10+**, a **CUDA GPU** (for `flash-attn`).
 
+Repository layout:
+
+```
+model/        UnifiedMoT model definition (3 streams: text / vision / generation)
+vae_model/    FLUX VAE autoencoder loader
+inference/    inference entry points  — T2I, multi-frame, VQA, interleaved planning
+train/        fine-tuning pipeline    — see train/README.md
+demo_cases/   bundled scenes for the interleaved-planning demo
+```
+
+`model/` and `vae_model/` are shared by both `inference/` and `train/`, so a
+checkpoint you fine-tune runs with the inference scripts unchanged.
+
 
 ### 2. Download weights
 
@@ -77,13 +91,13 @@ Requirements: **Python 3.10+**, a **CUDA GPU** (for `flash-attn`).
 <summary><b>① Text-to-Image (T2I)</b></summary>
 
 ```bash
-python text2image_inference.py \
+python inference/text2image.py \
     --ckpt ./ckpts/rxbrain --vae /path/to/ae.safetensors \
     --prompt "a watercolor painting of a cat" \
     --height 256 --width 256 --num_steps 25 --out out.png
 
 # with classifier-free guidance
-python text2image_inference.py \
+python inference/text2image.py \
     --ckpt ./ckpts/rxbrain --vae /path/to/ae.safetensors \
     --prompt "a watercolor painting of a cat" \
     --cfg_scale 5.0 --num_steps 50 --out out.png
@@ -95,7 +109,7 @@ python text2image_inference.py \
 <summary><b>② Multi-Frame World-Model Rollout</b> (4 future frames from an observation)</summary>
 
 ```bash
-python multiframe_inference.py \
+python inference/multiframe.py \
     --ckpt ./ckpts/rxbrain --vae /path/to/ae.safetensors \
     --frames /path/to/obs.jpg --task "imagine the next frames" \
     --num_frames 4 --num_steps 50 --out_dir multiframe_out
@@ -107,7 +121,7 @@ python multiframe_inference.py \
 
 
 ```bash
-python vqa_inference.py \
+python inference/vqa.py \
     --ckpt ./ckpts/rxbrain \
     --images demo_cases/bridgev2_move_toy/input/obs_1.jpg \
     --question "What objects are on the stovetop, and where is the green toy?" \
@@ -122,7 +136,7 @@ Runs interleaved planning on a bundled scene. See [`demo_cases/README.md`](./dem
 
 ```bash
 CASE=umi_fold_sock
-python interleave_inference.py \
+python inference/interleave.py \
     --ckpt ./ckpts/rxbrain --vae /path/to/ae.safetensors \
     --frames  demo_cases/$CASE/input/*.jpg \
     --task    "$(cat demo_cases/$CASE/prompt.txt)" \
@@ -130,6 +144,13 @@ python interleave_inference.py \
 ```
 
 </details>
+
+### 4. Fine-tune
+
+Fine-tuning covers **VQA / understanding**, **multi-frame generation** and
+**interleaved generation** — jointly or individually, mixed by integer ratios in a
+single run. Full instructions, data formats and config reference:
+**[`train/README.md`](./train/README.md)**.
 
 ---
 

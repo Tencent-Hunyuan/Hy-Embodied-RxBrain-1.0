@@ -17,14 +17,14 @@ training. ``--cfg_scale 1`` (default) disables CFG for the fastest path.
 
 Run:
     # no CFG (fastest)
-    python text2image_inference.py --ckpt /path/to/checkpoint \\
+    python inference/text2image.py --ckpt /path/to/checkpoint \\
                                --prompt "a watercolor cat" \\
                                --vae /path/to/vae.safetensors \\
                                --out out.png \\
                                --height 256 --width 256 --num_steps 25
 
     # with CFG
-    python text2image_inference.py --ckpt /path/to/checkpoint \\
+    python inference/text2image.py --ckpt /path/to/checkpoint \\
                                --prompt "a watercolor cat" \\
                                --vae /path/to/vae.safetensors \\
                                --cfg_scale 5.0 --num_steps 50
@@ -32,6 +32,14 @@ Run:
 from __future__ import annotations
 
 import argparse
+import os
+import sys
+
+# Runnable from any working directory: put the repository root on sys.path so
+# the shared `model` / `vae_model` packages resolve.
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
 
 import torch
 from PIL import Image
