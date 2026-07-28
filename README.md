@@ -147,9 +147,8 @@ python inference/interleave.py \
 
 ### 4. Fine-tune
 
-Fine-tuning covers **VQA / understanding**, **multi-frame generation** and
-**interleaved generation** — jointly or individually, mixed by integer ratios in a
-single run. Full instructions, data formats and config reference:
+Fine-tuning covers **VQA / understanding**, **multi frames generation** and
+**interleave generation** — See full instructions, data formats and config reference in 
 **[`train/README.md`](./train/README.md)**.
 
 ---
@@ -158,4 +157,16 @@ single run. Full instructions, data formats and config reference:
 
 Released under **Apache License 2.0**. See [`LICENSE`](./LICENSE) for details.
 
+## 📝 Citation
+
+If you find RxBrain useful in your research, please consider citing our work:
+
+```bibtex
+@article{liang2026rxbrain,
+  title={RxBrain: Embodied Cognition Foundation Model with Joint Language-Visual Reasoning and Imagination},
+  author={Liang, Haotian and Chen, Mingkang and Huang, Yufei and Guo, Yuchun and Zhu, Xiaomeng and Shi, Xiangli and Wang, Kaixuan and Mao, Yunxuan and Zhou, Weijie and Chen, Ling and others},
+  journal={arXiv preprint arXiv:2607.14187},
+  year={2026}
+}
+```
 
