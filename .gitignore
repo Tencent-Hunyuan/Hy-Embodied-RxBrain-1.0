@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Training / inference outputs (anchored to the repo root so a directory named
+# e.g. train/data_prep is never swallowed by a bare pattern)
+/output_weight/
+/out_interleave/
+/out_multiframe/
+/out_t2i/
+*.log
+
+# Weights & data — never commit
+*.safetensors
+*.ckpt
+*.pt
+*.bin
+*.parquet
+
+# Env / editor
+.venv/
+venv/
+.env
+.DS_Store
+.idea/
+.vscode/

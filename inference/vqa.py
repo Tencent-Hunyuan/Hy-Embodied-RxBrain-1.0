@@ -9,14 +9,22 @@ stopping at the <Image> modality-transition token.
 from __future__ import annotations
 
 import argparse
+import os
+import sys
 from typing import List
+
+# Runnable from any working directory: put the repository root on sys.path so
+# the shared `model` / `vae_model` packages resolve.
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
 
 import torch
 from transformers.models.hunyuan_vl_mot import HunYuanVLMoTProcessor
 from transformers.cache_utils import DynamicCache
 
 from model import UnifiedMoTForConditionalGeneration, maybe_init_generation_path
-from interleave_inference import build_conditioned_sequence, INPUT_IMAGE_PLACEHOLDER_IDS
+from inference.interleave import build_conditioned_sequence, INPUT_IMAGE_PLACEHOLDER_IDS
 
 
 @torch.no_grad()

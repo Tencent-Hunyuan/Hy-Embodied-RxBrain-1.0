@@ -1,6 +1,6 @@
 """Joint fixed-N multi-frame generation inference (world-model / x_to_N).
 
-Unlike `interleave_inference.py` (SigLIP-handoff autoregressive rollout — a prior
+Unlike `inference/interleave.py` (SigLIP-handoff autoregressive rollout — a prior
 frame re-enters the next step as a *clean SigLIP image*), multi-frame generation
 lays out **all N `<Image>` blocks in ONE sequence** and integrates them **jointly**
 with a single Euler ODE. A prior frame stays in context as its **VAE latent**
@@ -46,7 +46,7 @@ The only inference-time choice is the per-frame timestep SCHEDULE `t_k(step)`:
   model's per-frame timestep capability into N separate passes.
 
 Run:
-    python multiframe_inference.py --ckpt <ckpt> --vae <ae.safetensors> \
+    python inference/multiframe.py --ckpt <ckpt> --vae <ae.safetensors> \
         --frames obs0.jpg obs1.jpg --task "imagine the next frames" \
         --num_frames 4 --num_steps 50 --out_dir multiframe_out
 """
@@ -54,7 +54,14 @@ from __future__ import annotations
 
 import argparse
 import os
+import sys
 from typing import List, Optional
+
+# Runnable from any working directory: put the repository root on sys.path so
+# the shared `model` / `vae_model` packages resolve.
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
 
 import torch
 from PIL import Image
@@ -62,7 +69,7 @@ from transformers.models.hunyuan_vl_mot import HunYuanVLMoTProcessor
 
 # Reuse the (obs frames + task) prompt constructor, ViT placeholder ids, and the
 # montage helper from the interleave inference module.
-from interleave_inference import (
+from inference.interleave import (
     build_conditioned_sequence,
     INPUT_IMAGE_PLACEHOLDER_IDS,
     _row,
@@ -76,7 +83,7 @@ def _ar_decode_opening_text(
 ):
     """Greedily decode the assistant opening text until the model emits <Image>.
 
-    Mirrors the text loop in interleave_inference.generate_step_joint. Returns the
+    Mirrors the text loop in inference.interleave.generate_step_joint. Returns the
     decoded token ids (without the terminating <Image>/EOS)."""
     seq = list(prompt_ids)
     text_ids: List[int] = []
@@ -119,7 +126,7 @@ def generate_multiframe_joint(
 ):
     """Jointly denoise N frames in one sequence. Returns (opening_text, [imgs])."""
     from model.flow_matching_modules import unpatchify_latent
-    from text2image_inference import get_2d_position_ids
+    from inference.text2image import get_2d_position_ids
 
     cfg = model.config
     eos = cfg.eos_token_id
@@ -137,7 +144,7 @@ def generate_multiframe_joint(
 
     # Append the multi-frame task instruction to the user turn (train==infer parity).
     # build_conditioned_sequence folds task_text into the prompt.
-    from inference_utils import TASK_INSTRUCTION_MULTI_FRAME
+    from inference.utils import TASK_INSTRUCTION_MULTI_FRAME
     instr_text = (task_text + "\n" + TASK_INSTRUCTION_MULTI_FRAME) if task_text else TASK_INSTRUCTION_MULTI_FRAME
     prompt_ids, proc = build_conditioned_sequence(processor, obs_frames, instr_text)
     pixel_values = proc.get("pixel_values")
@@ -248,7 +255,7 @@ def vae_target_hw(img_path: str, max_size: int = 256, min_size: int = 96, stride
     its PSNR-vs-GT comparison (GT got squished 4:3 -> 16:9).
     """
     try:
-        from inference_utils import VAEImageTransform
+        from inference.utils import VAEImageTransform
         t = VAEImageTransform(max_size=max_size, min_size=min_size, stride=stride)
         tensor = t(Image.open(img_path).convert("RGB"))   # (3, H, W)
         return int(tensor.shape[1]), int(tensor.shape[2])

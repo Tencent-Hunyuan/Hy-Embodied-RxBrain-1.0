@@ -19,7 +19,7 @@ the prompt the same way (apply_chat_template([user(images)+text, assistant:""])
 match exactly.
 
 Run:
-    python interleave_inference.py --ckpt <ckpt> --vae <vae> \
+    python inference/interleave.py --ckpt <ckpt> --vae <vae> \
         --frames obs.jpg --task "put the cup on the shelf" \
         --max_frames 3 --num_steps 50 --out_dir out_interleave
 """
@@ -27,7 +27,14 @@ from __future__ import annotations
 
 import argparse
 import os
+import sys
 from typing import List, Optional
+
+# Runnable from any working directory: put the repository root on sys.path so
+# the shared `model` / `vae_model` packages resolve.
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
 
 import torch
 from PIL import Image
@@ -103,7 +110,7 @@ def generate_step_joint(
     time, so the text the model emits after `</answer>` and the <Image> trigger
     match what training taught."""
     from model.flow_matching_modules import unpatchify_latent
-    from text2image_inference import get_2d_position_ids
+    from inference.text2image import get_2d_position_ids
 
     cfg = model.config
     eos = cfg.eos_token_id
@@ -112,7 +119,7 @@ def generate_step_joint(
     inner = model.model
 
     # Append the interleave mode instruction (train==infer parity).
-    from inference_utils import TASK_INSTRUCTION_INTERLEAVE
+    from inference.utils import TASK_INSTRUCTION_INTERLEAVE
     prompt_ids, proc = build_conditioned_sequence(processor, input_image_paths, task_text,
                                                    prior_steps=prior_steps,
                                                    task_instruction=TASK_INSTRUCTION_INTERLEAVE)

@@ -5,7 +5,7 @@ transform used to derive train/inference resolution parity, and the
 task-instruction prompts that cue each generation mode.
 
 The SAME task strings are used at train and inference (parity is load-bearing:
-``interleave_inference`` / ``multiframe_inference`` build the prompt the same
+``inference.interleave`` / ``inference.multiframe`` build the prompt the same
 way the model was trained). Single source of truth, imported by the scripts.
 """
 

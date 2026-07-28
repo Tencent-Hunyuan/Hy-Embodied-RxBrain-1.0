@@ -1,0 +1,119 @@
+# =============================================================================
+# EXAMPLE training config for the RxBrain UnifiedMoT training pipeline.
+#   python train/finetune.py --config train/configs/example.yaml
+#
+# All paths below are PLACEHOLDERS — replace ${DATA_ROOT} / ${MODEL_ROOT} etc.
+# with real absolute paths (the loader does no env expansion; edit them here).
+#
+# The pipeline mixes N "buckets" (each top-level train_data_path entry = ONE
+# bucket = ONE mix_ratios weight). A bucket entry may be:
+#   * a directory of .parquet   (T2I image+caption, or MMU parquet)
+#   * a glob of .jsonl          (understanding / embodied, one message-list per line)
+#   * a LIST of the above       (concatenated into a single weighted bucket)
+# Per-step share of a bucket = its ratio / sum(ratios). The length-source bucket
+# (defines "epoch" length) is argmax(mix_ratios).
+# =============================================================================
+
+data:
+  train_data_path:
+    # ---- bucket 0: text-to-image (parquet: image bytes + caption) ----
+    - ${DATA_ROOT}/t2i/blip3o_parquet
+    # ---- bucket 1: understanding / VQA (jsonl; user[image+text] -> assistant[<think>..<answer>]) ----
+    - ${DATA_ROOT}/understanding/*.jsonl
+    # ---- bucket 2: embodied multi-frame world-model (jsonl; wrapped in <Video>) ----
+    - ${DATA_ROOT}/embodied/multiframe/*.jsonl
+    # ---- bucket 3: embodied interleaved planning (jsonl; per-step plan text + generated frame) ----
+    - ${DATA_ROOT}/embodied/interleave/*.jsonl
+  mix_ratios: [10, 15, 7, 9]        # integer weights; Σ=41; length-source = bucket 1 (argmax)
+  image_path_remap: {}              # optional {old_prefix: new_prefix} rewrite for image paths in data
+  max_length:       9216
+  max_total_tokens: 9216
+  shuffle:          true
+
+# ===== Model =================================================================
+model:
+  # A checkpoint of UnifiedMoTForConditionalGeneration (config.json + *.safetensors).
+  model_path: ${MODEL_ROOT}/pretrained_checkpoint
+  # VAE autoencoder weights (ae.safetensors) — loaded by vae_model.autoencoder.load_ae.
+  vae_path:   ${MODEL_ROOT}/ae.safetensors
+  latent_patch_size: 2
+  max_latent_size:   32
+  timestep_shift:    1.0
+  # Generation-stream MLP width. Omit / null -> use base intermediate_size (no widening).
+  # Set to 2x base to widen the generation FFN (Net2Wider init if the base has no _g weights).
+  # NOTE: if the base checkpoint already contains _g weights, this must MATCH their width
+  # (the load path does not re-shape an existing generation MLP).
+  mlp_g_intermediate_size: null
+  mlp_g_init_noise_std:    1.0e-4
+  # Per-stream freezing (all trainable by default).
+  freeze_vision_tower:           false
+  freeze_text_transformer:       false
+  freeze_vision_transformer:     false
+  freeze_generation_transformer: false
+  freeze_shared:                 false
+
+# ===== Task / Flow Matching ==================================================
+task:
+  task_config: "all"
+  # If true, ALSO feed each user-turn input image as a CLEAN VAE pixel-latent
+  # (spliced into inputs_embeds) on top of its SigLIP/ViT features. Fires only on
+  # generation-with-input samples (interleave/multiframe/I2I); no-op on pure T2I
+  # and on understanding/VQA. (Ablation knob.)
+  enable_input_vae_latent: false
+  train_image_start_token: true
+  train_video_start_token: true
+  vae_image_downsample: 16
+  max_image_size: 256
+  min_image_size: 96
+  image_stride:   16
+  understanding_max_pixels: 524288
+  text_cond_dropout_prob: 0.1       # classifier-free-guidance dropout on the conditioning
+  boundary_loss_weight: 0.0
+  mse_weight: 1.0                   # flow-matching (image generation) loss weight
+  ce_weight:  1.0                   # cross-entropy (text) loss weight
+  # Interleave exposure-bias fix: swap each PRIOR-STEP context frame to its VAE
+  # encode->decode mirror with this probability (so training context matches
+  # inference, where priors are the model's own VAE-decoded outputs). 0 disables.
+  # (Ablation knob.) Requires pre-computed mirrors under *_dst_root.
+  prior_frame_vae_roundtrip_prob: 0.0
+  prior_frame_vae_roundtrip_src_root: ${DATA_ROOT}/embodied/frames
+  prior_frame_vae_roundtrip_dst_root: ${DATA_ROOT}/embodied/frames_vae_rt
+
+# ===== Training ==============================================================
+training:
+  output_dir: output_weight/example_run   # fresh dir; resume scans here for live-*/
+  num_train_epochs: 1
+  max_train_steps: 0                       # 0 = derive from epochs
+  per_device_train_batch_size: 10
+  gradient_accumulation_steps: 1
+  learning_rate: 6.5e-5
+  # Optional per-stream LRs (default to `learning_rate` if omitted).
+  lr_vision_tower:           6.5e-5
+  lr_text_transformer:       6.5e-5
+  lr_vision_transformer:     6.5e-5
+  lr_generation_transformer: 6.5e-5
+  lr_shared:                 6.5e-5
+  lr_flow_matching:          6.5e-5
+  weight_decay:  0.01
+  warmup_steps:  1050
+  lr_scheduler_type: "cosine"
+  max_grad_norm: 1.0
+  mixed_precision: "bf16"
+  resume_from_checkpoint: true             # auto-resume newest live-{step}/ in output_dir
+  resume_from_checkpoint_step: 500
+  live_keep_count: 2
+  save_steps:    2000
+  logging_steps: 50
+  num_workers: 4
+  pin_memory:  false
+  dataloader_prefetch_factor: 2
+  seed: 42
+  bucket_size_multiplier: 10
+
+# ===== Logging ===============================================================
+logging:
+  use_tensorboard: true
+  enable_phase_timing: true
+  log_level: INFO
+  log_to_file: true
+  log_file_name: training.log
